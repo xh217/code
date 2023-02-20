@@ -1,17 +1,18 @@
-##filter Indel AF<=0.05 and alternative allele with less than 4 reads
+##filter Indel based on alllele frequency and supporting alternative allele
+#usage: Rscript strelka_indel_filter.R filelist
 
 library(VariantAnnotation)
 library(tidyverse)
 library(tidyr)
 library(dplyr)
 args <- commandArgs(trailingOnly = TRUE)
-AF_threshold=0.05
-alt_count=4
-snv_bcftools_path=/projects/Indel/snv_bcftools
+AF_threshold=0.05                       #set cutoff for allele frequency
+alt_count=4                             #set cutoff for supporting alternative allele 
+indel_bcftools_path=/projects/Indel/Indel_bcftools
 filelist<-args[1]
-x<-paste0(snv_bcftools_path,"/",filelist)
+x<-paste0(indel_bcftools_path,"/",filelist)
 out<-readVcf(x)
-Sample<-gsub(paste0(snv_bcftools_path,"/"),"",x)
+Sample<-gsub(paste0(indel_bcftools_path,"/"),"",x)
 Sample<-gsub(".gz","",Sample)
 T_DP<-as.vector(geno(out)$DP[,"TUMOR"])
 a<-geno(out)$TAR[,,1]                   #extract ref allele
@@ -29,4 +30,4 @@ all1<-all1 %>% separate(name,sep=":",c("chr","pos")) %>% separate(pos,sep="_",c(
 all1<-all1[,c("sample","chr","pos","alt","AF")]
 keepchr<-c("chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20","chr21","chr22","chrX")
 all1<-all1[which(all1$chr%in%keepchr),]
-write.table(all1,paste0(snv_bcftools_path,"/",Sample,".indel"),quote=F,row.names=F)
+write.table(all1,paste0(indel_bcftools_path,"/",Sample,".indel"),quote=F,row.names=F)
