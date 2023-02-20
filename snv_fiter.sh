@@ -11,7 +11,7 @@ common_snv_path=/projects/common_snv
 bcftools filter  -i 'FILTER=="PASS" && QSS >= 40 && FORMAT/DP[0] >= 10 && FORMAT/DP[1] >= 20' $strelka_path/$file_name/results/variants/somatic.snvs.vcf.gz --output $snv_bcftools_path/$file_name.gz --output-type z
 
 ##filter SNV AF<=0.05 and alternative allele with less than 4 reads 
-Rscript --vanilla $pbs_path/SNV_AF_ALT.R $file_name.gz 
+Rscript --vanilla $pbs_path/strelka_snv_filter.R $file_name.gz 
 
 ##annovar filteration,fitering >1% in dbSNPv150, 1000 genomes (The 1000 Genomes Project Consortium 2015), segmental duplications (genomicSuperDups) and centromeres 
 #annotate_variation.pl -buildver $ref_genome_version -downdb -webfrom annovar refGene $annovar_ref_path/ 
