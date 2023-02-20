@@ -1,0 +1,32 @@
+##filter Indel AF<=0.05 and alternative allele with less than 4 reads
+
+library(VariantAnnotation)
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+args <- commandArgs(trailingOnly = TRUE)
+AF_threshold=0.05
+alt_count=4
+snv_bcftools_path=/projects/Indel/snv_bcftools
+filelist<-args[1]
+x<-paste0(snv_bcftools_path,"/",filelist)
+out<-readVcf(x)
+Sample<-gsub(paste0(snv_bcftools_path,"/"),"",x)
+Sample<-gsub(".gz","",Sample)
+T_DP<-as.vector(geno(out)$DP[,"TUMOR"])
+a<-geno(out)$TAR[,,1]                   #extract ref allele
+b<-geno(out)$TIR[,,1]                   #extract alternative allele
+all<-cbind(T_DP,a,b)
+all<-all[,-c(2,4)]
+all<-as.data.frame(all) 
+all<-rownames_to_column(all, var = "name")
+colnames(all)<-c("name","T_DP","TUMOR_REF","TUMOR_ALT") 
+all$AF<-all$TUMOR_ALT/(all$TUMOR_REF+all$TUMOR_ALT)
+all<-subset(all,TUMOR_ALT>=alt_count)
+all1<-subset(all,AF>=AF_threshold)
+all1$sample<-Sample
+all1<-all1 %>% separate(name,sep=":",c("chr","pos")) %>% separate(pos,sep="_",c("pos","alt")) 
+all1<-all1[,c("sample","chr","pos","alt","AF")]
+keepchr<-c("chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20","chr21","chr22","chrX")
+all1<-all1[which(all1$chr%in%keepchr),]
+write.table(all1,paste0(snv_bcftools_path,"/",Sample,".indel"),quote=F,row.names=F)
