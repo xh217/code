@@ -1,30 +1,8 @@
-.libPaths(c("/cache/home/xh217/software/R-3.6.1/lib64", "/cache/home/xh217/software/R-3.6.1/lib64/R/library"))
-library(Rsamtools)
-library(BSgenome)
-library(BSgenome.Hsapiens.UCSC.hg38)
-library(stringr)
-library(plyr)
-
-# read data
-mut <- read.table("/scratch/xh217/KMT2C_work/TCGA_input/TCGA.ACC.somatic.maf", header = F, sep = "\t", stringsAsFactors = FALSE)
-colnames(mut) <- c("Chromosome", "Start_Position", "End_Position", "Tumor_Sample_Barcode", "Reference_Allele", "Tumor_Seq_Allele2")
-mut <- mut[, c(1, 2, 4, 5, 6)]
-mut <- mut[which(mut$Chromosome != "Chromosome"), ]
-
-
-sample.id = "Tumor_Sample_Barcode"
-chr = "Chromosome"
-pos = "Start_Position"
-ref = "Reference_Allele"
-alt = "Tumor_Seq_Allele2"
-bsg = BSgenome.Hsapiens.UCSC.hg38
-
-flank = data.frame()
-
+#read data
+#df_mut <- read.table("/projects/TCGA_input/TCGA.ACC.somatic.maf", header = F, sep = "\t", stringsAsFactors = FALSE)
 # the format of chromosomes should match that in the fasta file
 
-
-tri_nuclotide_counts<-function(df_mut,bsg=BSgenome.Hsapiens.UCSC.hg19)
+tri_nuclotide_counts<-function(df_mut,bsg=BSgenome.Hsapiens.UCSC.hg38)
 {
     if(exists("df_mut", mode = "list"))
       {
@@ -36,8 +14,11 @@ tri_nuclotide_counts<-function(df_mut,bsg=BSgenome.Hsapiens.UCSC.hg19)
             } else {
                 stop("df_mut is neither a file nor a loaded data frame")
             }
-      }
-mut=df_mut	
+      }	
+mut=df_mut
+colnames(mut) <- c("Chromosome", "Start_Position", "End_Position", "Tumor_Sample_Barcode", "Reference_Allele", "Tumor_Seq_Allele2")
+mut <- mut[, c(1, 2, 4, 5, 6)]
+mut <- mut[which(mut$Chromosome != "Chromosome"), ]
 mut[, chr] <- factor(mut[, chr]) 
 mut <- mut[which(mut[, ref] %in% c("A", "T", "C", "G") & mut[, alt] %in% c("A", "T", "C", "G")), ]
 mut[, chr] <- factor(mut[, chr])
@@ -46,21 +27,16 @@ mut$mutcat = paste(mut[, ref], ">", mut[, alt], sep = "")
 gind = grep("G", substr(mut$mutcat, 1, 1))
 tind = grep("A", substr(mut$mutcat, 1, 1))
 mut$std.mutcat = mut$mutcat
-mut$std.mutcat[c(gind, tind)] <- gsub("G", "g", gsub("C", "c", gsub("T", "t", gsub("A", "a", mut$std.mutcat[c(gind, tind)])))) # to lowercase
-mut$std.mutcat[c(gind, tind)] <- gsub("g", "C", gsub("c", "G", gsub("t", "A", gsub("a", "T", mut$std.mutcat[c(gind, tind)])))) # complement 
+mut$std.mutcat[c(gind, tind)] <- gsub("G", "g", gsub("C", "c", gsub("T", "t", gsub("A", "a", mut$std.mutcat[c(gind, tind)])))) 
+mut$std.mutcat[c(gind, tind)] <- gsub("g", "C", gsub("c", "G", gsub("t", "A", gsub("a", "T", mut$std.mutcat[c(gind, tind)])))) 
 mut$std.context = mut$context
-mut$std.context[c(gind, tind)] <- gsub("G", "g", gsub("C", "c", gsub("T", "t", gsub("A", "a", mut$std.context[c(gind, tind)])))) # to lowercase
-mut$std.context[c(gind, tind)] <- gsub("g", "C", gsub("c", "G", gsub("t", "A", gsub("a", "T", mut$std.context[c(gind, tind)])))) # complement
-mut$std.context[c(gind, tind)] <- sapply(strsplit(mut$std.context[c(gind, tind)], split = ""), function(str) {paste(rev(str), collapse = "")}) # reverse 
+mut$std.context[c(gind, tind)] <- gsub("G", "g", gsub("C", "c", gsub("T", "t", gsub("A", "a", mut$std.context[c(gind, tind)])))) 
+mut$std.context[c(gind, tind)] <- gsub("g", "C", gsub("c", "G", gsub("t", "A", gsub("a", "T", mut$std.context[c(gind, tind)])))) 
+mut$std.context[c(gind, tind)] <- sapply(strsplit(mut$std.context[c(gind, tind)], split = ""), function(str) {paste(rev(str), collapse = "")}) 
 # Make the tricontext
 mut$tricontext = paste(substr(mut$std.context, 1, 1), "[", mut$std.mutcat, "]", substr(mut$std.context, 3, 3), sep = "")
 mut1 <- mut[, c("Tumor_Sample_Barcode", "std.mutcat", "tricontext")]
-}	
-
 ##retrive +/-20bp sequences
-flank<-function(df_mut,flank_length=flank_length,bsg=BSgenome.Hsapiens.UCSC.hg19){
-mut<-df_mut
-flank_length=20
 flank <- getSeq(bsg, mut[, chr], as.numeric(mut[, pos]) - 20, as.numeric(mut[, pos]) + 20)
 flank <- as.data.frame(flank)
 colnames(flank) <- "flank40"
@@ -142,8 +118,12 @@ enrich_final <- aggregate(enrich_final[, c(2:5)], list(enrich_final$sample), sum
 rownames(enrich_final) <- enrich_final$sample
 enrich_final$sample <- NULL
 enrich_final$enrich_score <- (enrich_final$Mut_TCW/enrich_final$Con_TCW)/(enrich_final$Mut_C/enrich_final$Con_C)
-
-##Identification of samples significantly mutated by APOBEC
+#Identification of samples significantly mutated by APOBEC
+exe_fisher <- function(x) {
+	m <- matrix(unlist(x), ncol = 2, nrow = 2, byrow = T)
+	f <- fisher.test(m)
+	return(as.data.frame(f$p.value))
+}
 enrich_matrix <- as.data.frame(enrich_final$Mut_TCW)
 enrich_matrix$Mut_Denom <- enrich_final$Mut_C - enrich_final$Mut_TCW
 enrich_matrix$Con_TCW <- enrich_final$Con_TCW
@@ -151,11 +131,6 @@ enrich_matrix$Con_Denom <- enrich_final$Con_C - enrich_final$Con_TCW
 rownames(enrich_matrix) <- rownames(enrich_final)
 colnames(enrich_matrix) <- c("Mut_TCW", "Mut_Denom", "Con_TCW", "Con_Denom")
 enrich_matrix <- as.matrix(enrich_matrix)
-exe_fisher <- function(x) {
-	m <- matrix(unlist(x), ncol = 2, nrow = 2, byrow = T)
-	f <- fisher.test(m)
-	return(as.data.frame(f$p.value))
-}
 fishers <- t(as.data.frame(apply(enrich_matrix, 1, exe_fisher)))
 fishers <- as.data.frame(fishers)
 enrich_final$fisher_pval <- fishers$V1
@@ -167,3 +142,5 @@ enrich_final$Mut_Ratio <- NULL
 enrich_final$Con_Ratio <- NULL
 enrich_final$sample <- rownames(enrich_final)
 rownames(enrich_final) <- NULL
+return (enrich_final)
+}
