@@ -61,22 +61,6 @@ input_matrix[colnames(snv_exp),"SNV3"] <- snv_exp["Signature.3",]
 input_matrix[colnames(snv_exp),"SNV8"] <- snv_exp["Signature.8",]
 
 ##prep indel input
-expected_chroms <- paste0("chr",c(seq(1:22),"X"))
-Indelscat_list <- list()
-for (i in 1:length(Indels_vcf_files))
-{
-  tmp<-read.table(Indels_vcf_files[i],header=T,sep='\t',stringsAsFactors=F)
-  colnames(tmp)<-c("chr","position","position1","REF","ALT")
-  tmp$chr<-gsub("chr","",tmp$chr)
-  res <- tabToIndelsClassification(tmp,sample_names[i],genome.v = "hg38")
-  Indelscat_list[[i]] <- res$count_proportion
-}
-#bind the catalogues in one table
-Indel_catalogues <- do.call(rbind,Indelscat_list)
-rownames(Indel_catalogues) <- sample_names
-input_matrix[rownames(Indel_catalogues),"del.mh.prop"] <- Indel_catalogues[,"del.mh.prop"]
-
-##prep indel input
 Indels_vcf_files <- list.files(Indels_vcf_files, full.names = T, pattern = "\\.indel$", recursive = F)
 expected_chroms <- paste0("chr",c(seq(1:22),"X"))
 Indelscat_list <- list()
