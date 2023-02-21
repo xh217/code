@@ -1,8 +1,8 @@
 DESeqplot_annogene<-function(dataframe,log2FC_cutoff,padj_cutoff,...)
 {
 res1<-dataframe %>%
-mutate(gene_type = case_when(log2FoldChange >=2  & padj <= 0.05 ~ "up",
-                               log2FoldChange <= -2 & padj <= 0.05 ~ "down",
+mutate(gene_type = case_when(log2FoldChange >=log2FC_cutoff  & padj <= padj_cutof ~ "up",
+                               log2FoldChange <= -log2FC_cutoff & padj <= padj_cutof ~ "down",
                                TRUE ~ "ns")) 
 cols <- c("down" = '#3E4A89FF', "up" = '#E69F00', "ns" = "grey") 
 sizes <- c("up" = 3, "down" = 3, "ns" = 1) 
