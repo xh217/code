@@ -1,6 +1,6 @@
-DESeqplot_annogene<-function(dataframe,log2FC_cutoff,padj_cutoff,...)
+DESeqplot_annogene<-function(data_frame,log2FC_cutoff,padj_cutoff,...)
 {
-res1<-dataframe %>%
+res1<-data_frame %>%
 mutate(gene_type = case_when(log2FoldChange >=log2FC_cutoff  & padj <= padj_cutof ~ "up",
                                log2FoldChange <= -log2FC_cutoff & padj <= padj_cutof ~ "down",
                                TRUE ~ "ns")) 
@@ -10,7 +10,6 @@ alphas <- c("up" = 1, "down" = 1, "ns" = 0.3)
 sig_genes <-  res1[which(res1$gene_type=="down"|res1$gene_type=="up"),] 
 up_genes <-  res1[which(res1$gene_type=="up"),]
 down_genes <-  res1[which(res1$gene_type=="down"),]
-png(paste0("/projects/Deseq","/DEseq.png"),width = 6,height = 4, units = "in", res = 400)  
 ggplot(res1,aes(x=log2FoldChange,
              y = -log(padj),
              fill = gene_type,    
@@ -35,5 +34,4 @@ ggplot(res1,aes(x=log2FoldChange,
                    color="white",
                    label.size = NA,
                    nudge_y = 1)
-dev.off() 
 }
