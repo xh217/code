@@ -30,9 +30,9 @@ for (i in 1:length(SNV_tab_files))
 expected_chroms <- paste0("chr",c(seq(1:22),"X","Y"))
 Indelscat_list <- list()
 for (i in 1:length(Indels_vcf_files)){
-tmp<-read.table(Indels_vcf_files[i],header=F,sep='\t',stringsAsFactors=F)
- colnames(tmp)<-c("chr","position","position1","REF","ALT")
- tmp$chr<-gsub("chr","",tmp$chr)
+  tmp<-read.table(Indels_vcf_files[i],header=F,sep='\t',stringsAsFactors=F)
+  colnames(tmp)<-c("chr","position","position1","REF","ALT")
+  tmp$chr<-gsub("chr","",tmp$chr)
   res <- tabToIndelsClassification(tmp,sample_names[i],genome.v = "hg38")
   Indelscat_list[[i]] <- res$count_proportion
 }
