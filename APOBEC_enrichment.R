@@ -22,9 +22,23 @@ bsg = BSgenome.Hsapiens.UCSC.hg38
 flank = data.frame()
 
 # the format of chromosomes should match that in the fasta file
-mut[, chr] <- factor(mut[, chr])
 
-##trinuclotide counts
+
+tri_nuclotide_counts<-function(df_mut,bsg=BSgenome.Hsapiens.UCSC.hg19)
+{
+    if(exists("df_mut", mode = "list"))
+      {
+        mut.full <- mut.ref
+      } else {
+          if(file.exists(df_mut))
+            {
+               mut.full <- utils::read.table(df_mut, sep = "\t", header = TRUE, as.is = FALSE, check.names = FALSE)
+            } else {
+                stop("df_mut is neither a file nor a loaded data frame")
+            }
+      }
+mut=df_mut	
+mut[, chr] <- factor(mut[, chr]) 
 mut <- mut[which(mut[, ref] %in% c("A", "T", "C", "G") & mut[, alt] %in% c("A", "T", "C", "G")), ]
 mut[, chr] <- factor(mut[, chr])
 mut$context = BSgenome::getSeq(bsg, mut[, chr], as.numeric(mut[, pos]) - 1, as.numeric(mut[, pos]) + 1, as.character = T)
@@ -37,18 +51,19 @@ mut$std.mutcat[c(gind, tind)] <- gsub("g", "C", gsub("c", "G", gsub("t", "A", gs
 mut$std.context = mut$context
 mut$std.context[c(gind, tind)] <- gsub("G", "g", gsub("C", "c", gsub("T", "t", gsub("A", "a", mut$std.context[c(gind, tind)])))) # to lowercase
 mut$std.context[c(gind, tind)] <- gsub("g", "C", gsub("c", "G", gsub("t", "A", gsub("a", "T", mut$std.context[c(gind, tind)])))) # complement
-mut$std.context[c(gind, tind)] <- sapply(strsplit(mut$std.context[c(gind, tind)], split = ""), function(str) {
-	paste(rev(str), collapse = "")
-}) # reverse 
+mut$std.context[c(gind, tind)] <- sapply(strsplit(mut$std.context[c(gind, tind)], split = ""), function(str) {paste(rev(str), collapse = "")}) # reverse 
 # Make the tricontext
 mut$tricontext = paste(substr(mut$std.context, 1, 1), "[", mut$std.mutcat, "]", substr(mut$std.context, 3, 3), sep = "")
 mut1 <- mut[, c("Tumor_Sample_Barcode", "std.mutcat", "tricontext")]
+}	
 
 ##retrive +/-20bp sequences
+flank<-function(df_mut,flank_length=flank_length,bsg=BSgenome.Hsapiens.UCSC.hg19){
+mut<-df_mut
+flank_length=20
 flank <- getSeq(bsg, mut[, chr], as.numeric(mut[, pos]) - 20, as.numeric(mut[, pos]) + 20)
 flank <- as.data.frame(flank)
 colnames(flank) <- "flank40"
-
 ##TC and GA counts
 flank$TCcxt <- lapply(flank$flank40, function(x) {
 	str_count(x, "TC")
@@ -94,6 +109,7 @@ flank$A3cxt1 = unlist(flank$TGAcxt) + unlist(flank$TCAcxt)
 flank$A3cxt2 = unlist(flank$AGAcxt) + unlist(flank$TCTcxt)
 flank$YtetraCxt = unlist(flank$YTCAcxt) + unlist(flank$TGAYcxt)
 flank$RtetraCxt = unlist(flank$RTCAcxt) + unlist(flank$TGARcxt)
+}	
 ##combine and process TCW enrichment
 flank1 <- flank[, c("GCcxt", "A3cxt1", "A3cxt2")]
 enrich_tot <- cbind(mut1, flank1)
