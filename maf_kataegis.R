@@ -20,10 +20,10 @@ all_sample <- unique(maf_df$sample)
                        max = distance)
 	   if(dim(snv_kataegis)[1]!= 0)
               {
-         snv_kataegis$sample = all_sample[i]
+                 snv_kataegis$sample = all_sample[i]
               }
           else{
-         snv_kataegis <- data.frame() 
+                 snv_kataegis <- data.frame() 
               }   
     final <- cbind(final,snv_kataegis)
   }
