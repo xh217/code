@@ -19,12 +19,12 @@ all_sample <- unique(maf_df$sample)
                        min = min_base,
                        max = distance)
 	   if(dim(snv_kataegis)[1]!= 0)
-       {
+              {
          snv_kataegis$sample = all_sample[i]
-      else{
+              }
+          else{
          snv_kataegis <- data.frame() 
-          }   
-       }
+              }   
     final <- cbind(final,snv_kataegis)
   }
 
