@@ -1,3 +1,5 @@
+#read maf_df file with vcf_maf.R function
+
 maf_kataegis <- function(maf_df,min_base = min_base,distance = distance)
 {
 
