@@ -1,4 +1,4 @@
-##input df example:  sample_id  type  gene_id function_type
+##input df example:  sample_id  type  gene_id function_type(no space)
 ##                   sample_id exonic gene_id nonsynonymous
 
 heatmap_snv_indel_cnv<-function(df)
