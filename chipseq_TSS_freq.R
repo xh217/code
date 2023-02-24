@@ -1,6 +1,7 @@
-chipseq_TSS_freq <- function(scoreisland_df,bsg_gene = bsg_gene,window = window...){
+# scoreisland_df is a dataframe with #chr1	231200	237799	205.76668758517928
 
-
+chipseq_TSS_freq <- function(scoreisland_df,bsg_gene = bsg_gene,window = window...)
+{
 library(GenomicRanges)
 library(rtracklayer)
 library(BSgenome.Hsapiens.UCSC.hg19)
